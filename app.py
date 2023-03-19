@@ -3,6 +3,7 @@
 
 import os, sys, shelve
 from time import time
+from scraper import Scraper
 
 
 def main():
@@ -25,6 +26,10 @@ def main():
 
     # Setting up the manga Name and URL.
     mangaName, mangaURL = sys.argv[1], URLsShelf[sys.argv[1]]
+
+    # Scraping through https://tcbscans.org for the manga.
+    manga = Scraper(mangaURL)
+    mangaDATA = manga.scrape()
 
 
 def shelfCommandsProcesses():
