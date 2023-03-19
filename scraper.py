@@ -31,7 +31,7 @@ class Scraper:
             (.*?/)              # Group3 - Manga name.
             (
                 (.*?-)          # Group5 - "chapter-"
-                ((\d|\.)+)      # Group6 - Chapter Number
+                ((\d|-)+)      # Group6 - Chapter Number
             )    
             """,
             re.VERBOSE,
@@ -55,7 +55,7 @@ class Scraper:
 
         # Getting the next chapter URL.
         if nextBtn == None:
-            self.downloading = False
+            self.running = False
         else:
             self.cURL = nextBtn.get("href")
 
@@ -104,6 +104,6 @@ class Scraper:
         # Createing threads to download each page.
         for elem in pageElems:
             # Storing the current page URL in the STORAGE.
-            self.STORAGE[-1].append(elem.get("src"))
+            self.STORAGE[-1].append(elem.get("src")[7:])
 
-        print("Downloaded.")
+        print("Added.")
