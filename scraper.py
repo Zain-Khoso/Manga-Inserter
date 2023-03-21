@@ -68,13 +68,16 @@ class Scraper:
             # Initializing a place for the current chapter in STORAGE.
             self.STORAGE.append([])
 
+            # Appending the Chapter-Num.
+            self.STORAGE[-1].append(self.chpNum)
+
             # Downloading the chapter DOM.
             try:
                 res = req.get(self.cURL)
                 res.raise_for_status()
 
             # Handeling Connection or HTTPError.
-            except ConnectionError or HTTPError as err:
+            except (ConnectionError, HTTPError) as err:
                 print(
                     "Was not able to download Chapter_%s\nAt: %s\nBecause of: %s"
                     % (self.chpNum, self.cURL, err)

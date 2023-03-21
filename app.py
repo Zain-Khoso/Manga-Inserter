@@ -4,6 +4,7 @@
 import os, sys, shelve
 from time import time
 from scraper import Scraper
+from databaseInserter import Inserter
 
 
 def main():
@@ -30,6 +31,10 @@ def main():
     # Scraping through https://tcbscans.org for the manga.
     manga = Scraper(mangaURL)
     mangaDATA = manga.scrape()
+
+    # Inserting the mangaDATA in the Database.
+    mangaInserter = Inserter(mangaDATA)
+    mangaInserter.insert(mangaName)
 
 
 def shelfCommandsProcesses():
