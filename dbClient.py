@@ -5,11 +5,8 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
 
-class Inserter:
-    def __init__(self, urlData) -> None:
-        # Getting the urlData from the arguments.
-        self.URLData = urlData
-
+class Client:
+    def __init__(self) -> None:
         # Reading the .env file.
         env = Env()
         env.read_env()
@@ -27,16 +24,26 @@ class Inserter:
         # Creating a Database inside the cluster.
         self.Database = client["MangaURLs"]
 
-    def insert(self, mangaName) -> None:
+    def mangaFormattedName(self, mangaName) -> str:
+        # Converts a non-formated managaName into a formated on
+        mangaNameList = mangaName.split("-")
+        formattedName = " ".join(mangaNameList).title()
+
+        if formattedName == "":
+            return mangaName
+
+        return formattedName
+
+    def insert(self, mangaName, URLData) -> None:
         print("\nInsertion Began.\n")
         # Creating a collection for the Manga in the DataBase.
-        collection = self.Database[mangaName]
+        collection = self.Database[self.mangaFormattedName(mangaName)]
 
         # The list of all the chapter documents.
         chapters = []
 
         # Looping through the URLData and adding it to the Collection.
-        for chapter in self.URLData:
+        for chapter in URLData:
             # Getting the chapterImgURLs in appropriate format for insertion in some steps.
 
             # 1 - The local Chapter Document.
@@ -56,3 +63,19 @@ class Inserter:
         collection.insert_many(chapters)
 
         print("Insertion Ended.")
+
+    def drop(self, mangaName) -> None:
+        mangaName = self.mangaFormattedName(mangaName)
+
+        # Checking if there isn't a collection for the given manga in the database.
+        if mangaName not in self.Database.list_collection_names():
+            print("You don't have a collection for %s, in the database." % mangaName)
+            return None
+
+        # Selecting the collection.
+        collection = self.Database[mangaName]
+
+        # Droping the collection.
+        collection.drop()
+
+        print("%s Collection Dropped." % mangaName)

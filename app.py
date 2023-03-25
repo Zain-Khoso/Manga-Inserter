@@ -4,14 +4,14 @@
 import os, sys, shelve
 from time import time
 from scraper import Scraper
-from databaseInserter import Inserter
+from dbClient import Client
 
 
 def main():
-    # The shelf keywords
+    # The Shelf keywords.
     shelfCMDS = ["add", "delete", "list"]
 
-    # The Database commands.
+    # The Database keywords.
     databaseCMDS = ["insert", "drop"]
 
     # Handling the shelf queries.
@@ -42,100 +42,79 @@ def shelfCommandsProcesses():
         # Opening the URLs Shelf
         shelf = shelve.open(os.path.join("Shelfs", "URLsShelf"))
 
-        # If the user wants to add a manga URL.
-        if sys.argv[1].lower() == "add":
-            shelf[sys.argv[2]] = sys.argv[3]
+        match sys.argv[1].lower():
+            # If the user wants to add a manga URL.
+            case "add":
+                shelf[sys.argv[2]] = sys.argv[3]
+                print("Added %s." % sys.argv[2])
 
-        # If the user wants to get a list of the alaliable manga URLs
-        elif sys.argv[1].lower() == "list":
-            # If the user has no downloaders
-            if len(shelf.keys()) == 0:
-                print("You have no downloaders.")
-                return None
+            # If the user wants to get a list of the availiable manga URLs
+            case "list":
+                # If the user has no downloaders
+                if len(shelf.keys()) == 0:
+                    print("You have no downloaders.")
 
-            for index, key in enumerate(shelf.keys()):
-                print(f"\n{index+1}. {key}")
+                for index, key in enumerate(shelf.keys()):
+                    print(f"\n{index+1}. {key}")
 
-        # If the user wants to delete a particular manga URL.
-        elif sys.argv[1].lower() == "delete" and len(sys.argv) >= 3:
-            if sys.argv[2] in shelf.keys():
-                del shelf[sys.argv[2]]
-                return None
-            else:
-                print("You have no downloader for %s" % sys.argv[2])
-
-        # If the user wants to delete all the manga URLs.
-        elif sys.argv[1].lower() == "delete" and len(sys.argv) >= 2:
-            shelf.clear()
+            # If the user wants to delete manga URLs.
+            case "delete":
+                # If the user wants to delete a particular manga URL.
+                if len(sys.argv) >= 3:
+                    if sys.argv[2] in shelf.keys():
+                        del shelf[sys.argv[2]]
+                        print("%s has been removed from the Shelf." % sys.argv[2])
+                    else:
+                        print("You have no downloader for %s" % sys.argv[2])
+                else:
+                    # If the user wants to delete all the manga URLs.
+                    shelf.clear()
+                    print("The Shelf has been cleared.")
 
         # Closing the URLs Shelf
         shelf.close()
 
     except IndexError:
+        print("\n\nPlease use the correct syntax: ")
         print("\nadd <manga-name> <manga-URL> : To add a new manga in the shelf")
         print("\nlist : To get a list of all the availiable manga URLs.")
-        print("\n\nPlease use the correct syntax: ")
         print("\ndelete <manga-name> : To delete a particular manga")
         print("\ndelete : To delete every URL in the shelf")
 
 
 def databaseCommandsProcesses():
-    # Opening the URL shelf.
-    URLsShelf = shelve.open(os.path.join("Shelfs", "URLsShelf"))
+    # Creating a Client Instance that will be working with our Database.
+    mangaClient = Client()
 
-    if sys.argv[1] == "insert":
-        # If the user wants to download an unregistered manga.
-        if sys.argv[2] not in URLsShelf.keys():
-            print("You don't currently have a downloader for %s" % sys.argv[2])
+    match sys.argv[1]:
+        case "insert":
+            # Opening the URL shelf.
+            URLsShelf = shelve.open(os.path.join("Shelfs", "URLsShelf"))
 
-            return None
+            # If the user wants to download an unregistered manga.
+            if sys.argv[2] not in URLsShelf.keys():
+                print("You don't currently have a downloader for %s" % sys.argv[2])
 
-        # Setting up the manga Name and URL.
-        mangaName, mangaURL = sys.argv[2], URLsShelf[sys.argv[2]]
+                return None
 
-        # Scraping through https://tcbscans.org for the manga.
-        manga = Scraper(mangaURL)
-        mangaDATA = manga.scrape()
+            # Getting the manga Name and URL from the command-line-arguments.
+            mangaName, mangaURL = sys.argv[2], URLsShelf[sys.argv[2]]
 
-        # Inserting the mangaDATA in the Database.
-        mangaInserter = Inserter(mangaDATA)
-        mangaInserter.insert(mangaName)
+            # Scraping through https://tcbscans.org for the manga.
+            mangaData = Scraper(mangaURL).scrape()
 
-    else:
-        # Imports
-        from environs import Env
-        from pymongo import MongoClient
-        from pymongo.server_api import ServerApi
+            # Inserting the mangaDATA in the Database.
+            mangaClient.insert(mangaName, mangaData)
 
-        # Reading the .env file.
-        env = Env()
-        env.read_env()
+            # CLosing the URLs Shelf.
+            URLsShelf.close()
 
-        # Getting the username and password of MongoDB-Atlas User from the .env-file.
-        username = env.str("atlas_username")
-        password = env.str("atlas_user_password")
+        case "drop":
+            # Getting the manga name from the command-line-arguments.
+            mangaName = sys.argv[2]
 
-        # Creating a client-Obj for the Atlas-Cluster.
-        client = MongoClient(
-            f"mongodb+srv://{username}:{password}@maincluster.bwozlbo.mongodb.net/?retryWrites=true&w=majority",
-            server_api=ServerApi("1"),
-        )
-
-        # Selecting a Database inside the cluster.
-        database = client["MangaURLs"]
-
-        # Checking if there isn't a collection for the given manga in the database.
-        if sys.argv[2] not in database.list_collection_names():
-            print("You don't have a collection for %s, in the database." % sys.argv[2])
-            return None
-
-        # Selecting the collection.
-        collection = database[sys.argv[2]]
-
-        # Droping the collection.
-        collection.drop()
-
-        print("%s Collection Dropped." % sys.argv[2])
+            # Dropping the specified collection.
+            mangaClient.drop(mangaName)
 
 
 if __name__ == "__main__":
