@@ -45,8 +45,8 @@ def shelfCommandsProcesses():
         match sys.argv[1].lower():
             # If the user wants to add a manga URL.
             case "add":
-                shelf[sys.argv[2]] = sys.argv[3]
-                print("Added %s." % sys.argv[2])
+                shelf[sys.argv[2].lower()] = sys.argv[3]
+                print("Added %s." % sys.argv[2].lower())
 
             # If the user wants to get a list of the availiable manga URLs
             case "list":
@@ -61,11 +61,13 @@ def shelfCommandsProcesses():
             case "delete":
                 # If the user wants to delete a particular manga URL.
                 if len(sys.argv) >= 3:
-                    if sys.argv[2] in shelf.keys():
-                        del shelf[sys.argv[2]]
-                        print("%s has been removed from the Shelf." % sys.argv[2])
+                    if sys.argv[2].lower() in shelf.keys():
+                        del shelf[sys.argv[2].lower()]
+                        print(
+                            "%s has been removed from the Shelf." % sys.argv[2].lower()
+                        )
                     else:
-                        print("You have no downloader for %s" % sys.argv[2])
+                        print("You have no downloader for %s" % sys.argv[2].lower())
                 else:
                     # If the user wants to delete all the manga URLs.
                     shelf.clear()
@@ -92,13 +94,15 @@ def databaseCommandsProcesses():
             URLsShelf = shelve.open(os.path.join("Shelfs", "URLsShelf"))
 
             # If the user wants to download an unregistered manga.
-            if sys.argv[2] not in URLsShelf.keys():
-                print("You don't currently have a downloader for %s" % sys.argv[2])
+            if sys.argv[2].lower() not in URLsShelf.keys():
+                print(
+                    "You don't currently have a downloader for %s" % sys.argv[2].lower()
+                )
 
                 return None
 
             # Getting the manga Name and URL from the command-line-arguments.
-            mangaName, mangaURL = sys.argv[2], URLsShelf[sys.argv[2]]
+            mangaName, mangaURL = sys.argv[2].lower(), URLsShelf[sys.argv[2].lower()]
 
             # Scraping through https://tcbscans.org for the manga.
             mangaData = Scraper(mangaURL).scrape()
@@ -111,7 +115,7 @@ def databaseCommandsProcesses():
 
         case "drop":
             # Getting the manga name from the command-line-arguments.
-            mangaName = sys.argv[2]
+            mangaName = sys.argv[2].lower()
 
             # Dropping the specified collection.
             mangaClient.drop(mangaName)

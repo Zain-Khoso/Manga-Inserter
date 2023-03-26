@@ -24,20 +24,10 @@ class Client:
         # Creating a Database inside the cluster.
         self.Database = client["MangaURLs"]
 
-    def mangaFormattedName(self, mangaName) -> str:
-        # Converts a non-formated managaName into a formated on
-        mangaNameList = mangaName.split("-")
-        formattedName = " ".join(mangaNameList).title()
-
-        if formattedName == "":
-            return mangaName
-
-        return formattedName
-
     def insert(self, mangaName, URLData) -> None:
         print("\nInsertion Began.\n")
         # Creating a collection for the Manga in the DataBase.
-        collection = self.Database[self.mangaFormattedName(mangaName)]
+        collection = self.Database[mangaName]
 
         # The list of all the chapter documents.
         chapters = []
@@ -50,11 +40,12 @@ class Client:
             chapterDict = {}
 
             # 2 - A default array in the local-Document.
-            chapterDict.setdefault(f"Chapter_{chapter[0]}", [])
+            chapterDict.setdefault("ChapterNum", str(chapter[0]))
+            chapterDict.setdefault(f"pages", [])
 
             # 3 - Adding all the imgURLs in the local-Document.
             for page in chapter[1:]:
-                chapterDict[f"Chapter_{chapter[0]}"].append(page)
+                chapterDict[f"pages"].append(page)
 
             # Appending this chapter document to the list of chapters.
             chapters.append(chapterDict)
@@ -65,8 +56,6 @@ class Client:
         print("Insertion Ended.")
 
     def drop(self, mangaName) -> None:
-        mangaName = self.mangaFormattedName(mangaName)
-
         # Checking if there isn't a collection for the given manga in the database.
         if mangaName not in self.Database.list_collection_names():
             print("You don't have a collection for %s, in the database." % mangaName)
